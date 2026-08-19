@@ -7,5 +7,33 @@ Pedro Vasconcelos Markowicz 4 - @usuario1
 Samuel Vieira Bento Severo 5 - @usuario1
 
 HISTÓRICO DE COMMITS
-a1b2c3d Mensagem do commit mais recente
-b4d5e6f Mensagem do commit anterior
+
+f992848 Add contributors and commit history to historico_commits.txt (2)
+ac7dda1 Delete simulador-hospitalar/SimuladorHospitalar/data/sprites/.gitkeep (2)
+d9b3b39 Rename simulador-hospitalar/SimuladorHospitalar/Wavefront.pde to SimuladorHospitalar/Wavefront.pde (2)
+e052eba Rename simulador-hospitalar/SimuladorHospitalar/Paciente.pde to SimuladorHospitalar/Paciente.pde (2)
+d3962c3 Rename simulador-hospitalar/SimuladorHospitalar/Coordenadas.pde to SimuladorHospitalar/Coordenadas.pde (2)
+cebd091 Rename simulador-hospitalar/SimuladorHospitalar/Main.pde to SimuladorHospitalar/Main.pde (2)
+e30e03c Delete Wavefront.pde (2)
+62c5874 Implement Wavefront class for distance calculation (2)
+e4a2669 Delete Paciente.pde (2)
+b33aaa7 Implement Paciente and ListaPacientes classes (2)
+c4adb6a Delete Main.pde (2)
+9f44cca Delete Coordenadas.pde (2)
+23566c1 Add Coordenadas and FilaCoordenadas classes (2)
+efa7c99 Initialize hospital simulator with main logic (2)
+5d307c7 Create .gitkeep (2)
+d0daf10 Implement Wavefront class with distance calculation (2)
+80afa36 Coordenadas.pde (1)
+d03aa54 Delete Coordenadas.pde (1)
+184596a Add files via upload (1)
+ba49a3e Paciente.pde (1)
+38f1673 Main.pde (1)
+313c295 Update README with improved formatting and content (2)
+eea1bb9 Enhance README with project details and architecture (2)
+eac86af Fix README title formatting (2)
+ae8823b Initial commit (2)
+
+CONFÊNCIA
+
+github.com/MiguelAroot/Simulador-triagem-Manchester-AEDS/commits/main
