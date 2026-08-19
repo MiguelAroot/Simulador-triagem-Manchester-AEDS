@@ -1,0 +1,13 @@
+# Pastas de exportação/build geradas pelo Processing
+application.linux64/
+application.macosx/
+application.windows64/
+application.windows32/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Cache/backup do editor Processing
+*.bak
+*~
