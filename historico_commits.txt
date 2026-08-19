@@ -3,7 +3,7 @@ INTEGRANTES E USUÁRIOS DO GITHUB
 Felipe de Jesus Castro 1 - @PancakesKEK
 Miguel Augusto Silva Caetano 2 - @MiguelAroot
 João Lucas Alves Lameirão 3 - @a2025954306
-Pedro Vasconcelos Markowicz 4 - @usuario1
+Pedro Vasconcelos Markowicz 4 - @Ze-lele
 Samuel Vieira Bento Severo 5 - @a2025953172
 
 HISTÓRICO DE COMMITS
