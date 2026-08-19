@@ -1,4 +1,4 @@
-//recursos de mapa, core, nunca apagar, ok
+// ESSA É A MAIN - mesmo nome p/ n bugar - recursos de mapa, core, nunca apagar, ok
 char[][] gridMapa;
 int linhas, colunas;
 int tamanhoCelula = 29;
