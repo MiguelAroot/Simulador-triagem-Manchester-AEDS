@@ -1,0 +1,11 @@
+INTEGRANTES E USUÁRIOS DO GITHUB
+
+Felipe de Jesus Castro 1 - @usuario1
+Miguel Augusto Silva Caetano 2 - @usuario2
+João Lucas Alves Lameirão 3 - @usuario1
+Pedro Vasconcelos Markowicz 4 - @usuario1
+Samuel Vieira Bento Severo 5 - @usuario1
+
+HISTÓRICO DE COMMITS
+a1b2c3d Mensagem do commit mais recente
+b4d5e6f Mensagem do commit anterior
