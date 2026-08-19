@@ -34,6 +34,6 @@ eea1bb9 Enhance README with project details and architecture (2)
 eac86af Fix README title formatting (2)
 ae8823b Initial commit (2)
 
-CONFÊNCIA
+CONFERÊNCIA
 
 github.com/MiguelAroot/Simulador-triagem-Manchester-AEDS/commits/main
