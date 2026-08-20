@@ -21,12 +21,16 @@ float tempoProximoSpawn = 0;
 
 int geradorL = -1, geradorC = -1;
 
-
+//sprites do cenário 
+PImage sprParede, sprChao, sprTotem, sprGerador, sprRemovedor;
+PImage sprAssentoLivre, sprAssentoReservado, sprAssentoOcupado;
+PImage sprPostoEnfermeira, sprPostoMedico;
 
 void setup() {
   size(697, 700);
-  
-  loadMapa("mapa.txt");
+
+  carregarSprites();
+  loadMapa("mapas/mapa1.txt");
   encontrarGerador();
   calcularProximoSpawn();
   
@@ -37,6 +41,26 @@ void setup() {
   tempoUltimoFrame = millis() / 1000.0;
   
 }
+
+void carregarSprites() {
+  sprParede = loadImage("sprites/parede.png");
+  sprChao = loadImage("sprites/chao.png");
+  sprTotem = loadImage("sprites/totem.png");
+  sprRemovedor = loadImage("sprites/removedor.png");
+
+  // ainda não tem sprite próprio de gerador, dai fica null e o drawMapa()
+  // desenha um retângulo verde no lugar, pra não travar o sketch
+  sprGerador = loadImage("sprites/gerador.png");
+
+  // só existe uma imagem de assento por enquanto para os 3 estados
+  sprAssentoLivre = loadImage("sprites/assento.png");
+  sprAssentoReservado = loadImage("sprites/assento.png");
+  sprAssentoOcupado = loadImage("sprites/assento.png");
+
+  sprPostoEnfermeira = loadImage("sprites/enfermeira.png");
+  sprPostoMedico = loadImage("sprites/medico.png");
+}
+
 void draw() {
   background(255);
   if (gridMapa != null) {
@@ -94,25 +118,59 @@ void loadMapa(String arquivo) {
   }
   
 }
+
+float escalaBoneco = 2.2; //em uma celula só tava osso de mais para enxergar o boneco
+
 void drawMapa() {
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
       char celula = gridMapa[i][j];
+      int px = j * tamanhoCelula;
+      int py = i * tamanhoCelula;
+
+      if (celula == '#') {
+             image(sprParede, px, py, tamanhoCelula, tamanhoCelula);
+           } else {
+               image(sprChao, px, py, tamanhoCelula, tamanhoCelula);
+           }
+        }
+      }
+
+     for (int i = 0; i < linhas; i++) { //passei dnv por cima para os bixinhos ficarem em cima do cenário
+    for (int j = 0; j < colunas; j++) {
+      char celula = gridMapa[i][j];
+      int px = j * tamanhoCelula;
+      int py = i * tamanhoCelula;
+
+      if (celula == 'G') {
+        if (sprGerador != null) {
+          image(sprGerador, px, py, tamanhoCelula, tamanhoCelula);
+        } else {
+          // enquanto não existe AINDA sprites para o gerador
+          fill(46, 160, 67);
+          rect(px, py, tamanhoCelula, tamanhoCelula);
+        }
+      }
       
-      if (celula == '#') fill(100);
-      else if (celula == '.') fill(240);
-      else if (celula == 'G') fill(0, 255, 0);
-      else if (celula == 'R') fill(255, 0, 0);
-      else if (celula == 'A') fill(150, 75, 0);
-      else if (celula == 'T') fill(255, 255, 0);
-      else if (celula == 'E') fill(0, 255, 255);
-      else if (celula == 'M') fill(0, 0, 255);
+      else if (celula == 'R') image(sprRemovedor, px, py, tamanhoCelula, tamanhoCelula);
+      else if (celula == 'T') image(sprTotem, px, py, tamanhoCelula, tamanhoCelula);
+      else if (celula == 'E') desenharSpriteEstourando(sprPostoEnfermeira, px, py, escalaBoneco);
+      else if (celula == 'M') desenharSpriteEstourando(sprPostoMedico, px, py, escalaBoneco);
+      else if (celula == 'A') {
       
-      stroke(200);
-      rect(j * tamanhoCelula, i * tamanhoCelula, tamanhoCelula, tamanhoCelula);
+        image(sprAssentoLivre, px, py, tamanhoCelula, tamanhoCelula);
+    
+      }
     }
   }
   
+}
+
+void desenharSpriteEstourando(PImage spr, int px, int py, float escala) {
+  float tamanho = tamanhoCelula * escala;
+  float destX = px + tamanhoCelula / 2.0 - tamanho / 2.0;
+  float destY = py + tamanhoCelula - tamanho;
+  image(spr, destX, destY, tamanho, tamanho);
 }
 
 //favor colocar os encontrar aqui
