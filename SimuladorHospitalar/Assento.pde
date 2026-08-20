@@ -5,27 +5,27 @@ final String ASSENTO_OCUPADO = "OCUPADO";
 
 class Assento {
   int linha, coluna;          // Onde a cadeira fica no mapa
-  String estado;              // Como tá a situação da cadeira agora
-  int[][] distanciasAteAqui;  // O Wavefront salvo pra não ter que recalcular rota toda hora
+  String estado;              //situação da cadeira
+  int[][] distanciasAteAqui;  // O Wavefront salvo 
 
   Assento(int l, int c) {
     this.linha = l;
     this.coluna = c;
-    this.estado = ASSENTO_LIVRE; // Toda cadeira começa liberada
+    this.estado = ASSENTO_LIVRE; // cadeira começa liberada
   }
 }
 
-int buscarAssentoMaisProximo(int origemL, int origemC) { // Acha a cadeira perfeita pro paciente
+int buscarAssentoMaisProximo(int origemL, int origemC) { 
   int total = assentos.length;
 
-  int[] indicesLivres = new int[total];     // Lista de quem tá livre
-  int[] distanciasLivres = new int[total];  // Lista de quão longe cada uma tá
-  int qtdLivres = 0;                        // Quantas opções válidas achamos
+  int[] indicesLivres = new int[total];     
+  int[] distanciasLivres = new int[total];  
+  int qtdLivres = 0;                       
 
-  for (int i = 0; i < total; i++) { // Passa pente fino em todos os assentos
-    if (assentos[i].estado.equals(ASSENTO_LIVRE)) { // Só interessa se tiver vaga
-      int dist = assentos[i].distanciasAteAqui[origemL][origemC]; // Distância real navegando pelas paredes
-      if (dist != -1) {                     // -1 é parede/bloqueado, então ignora
+  for (int i = 0; i < total; i++) { 
+    if (assentos[i].estado.equals(ASSENTO_LIVRE)) { 
+      int dist = assentos[i].distanciasAteAqui[origemL][origemC]; // distância navegando pelas paredes
+      if (dist != -1) {                     // -1 obstaculo ignora
         indicesLivres[qtdLivres] = i;       // Salva o ID do assento
         distanciasLivres[qtdLivres] = dist; // Salva a distância dele
         qtdLivres++;
@@ -33,20 +33,19 @@ int buscarAssentoMaisProximo(int origemL, int origemC) { // Acha a cadeira perfe
     }
   }
 
-  // Insertion sort na raça porque o professor/projeto proibiu usar biblioteca pronta
   for (int i = 1; i < qtdLivres; i++) {
     int distAtual = distanciasLivres[i];
     int idxAtual = indicesLivres[i];
     int j = i - 1;
-    while (j >= 0 && distanciasLivres[j] > distAtual) { // Empurra o que for maior pra frente
+    while (j >= 0 && distanciasLivres[j] > distAtual) { 
       distanciasLivres[j + 1] = distanciasLivres[j];
       indicesLivres[j + 1] = indicesLivres[j];
       j--;
     }
-    distanciasLivres[j + 1] = distAtual; // Encaixa o menorzinho aqui
+    distanciasLivres[j + 1] = distAtual;
     indicesLivres[j + 1] = idxAtual;
   }
 
-  if (qtdLivres == 0) return -1; // Deu ruim: tudo cheio ou sem caminho
-  return indicesLivres[0];       // Manda o ID da mais pertinho
+  if (qtdLivres == 0) return -1; 
+  return indicesLivres[0];     
 }
