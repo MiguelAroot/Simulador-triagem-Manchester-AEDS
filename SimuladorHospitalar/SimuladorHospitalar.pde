@@ -5,7 +5,12 @@ int tamanhoCelula = 29;
 
 //recursos wavefront
 Wavefront wf = new Wavefront();
-int[][] mapaDistancesTotem;
+int[][] mapaDistanciasTotem;
+
+//totem, assentos e grid de ocupação física (true = célula com paciente)
+Totem totem;
+Assento[] assentos;
+boolean[][] ocupacao;
 
 //lista de pacientes e tudo mais
 ListaPacientes pacientesAtivos = new ListaPacientes();
@@ -34,10 +39,10 @@ void setup() {
   encontrarGerador();
   calcularProximoSpawn();
   
-  Coordenadas totem = encontrarTotem();
-  if (totem != null) {
-    mapaDistancesTotem = wf.calcular(totem.linha, totem.coluna, gridMapa, linhas, colunas);
-  }
+  inicializarTotem();
+  inicializarAssentos();
+  ocupacao = new boolean[linhas][colunas];
+  
   tempoUltimoFrame = millis() / 1000.0;
   
 }
@@ -74,7 +79,8 @@ void draw() {
 
     
   if (tempoAcumulado >= tempoProximoSpawn) {
-    if (geradorL != -1) {
+    // só nasce paciente novo se a célula do gerador estiver livre (regra do enunciado)
+    if (geradorL != -1 && !ocupacao[geradorL][geradorC]) {
       Paciente p = new Paciente(contadorIds++, geradorL, geradorC);
       pacientesAtivos.adicionar(p);
     }
@@ -84,7 +90,7 @@ void draw() {
   
   //passo a cada 0.2s
   if (tempoAtual - tempoUltimoPasso >= intervaloPasso) {
-    pacientesAtivos.moverTodos(mapaDistancesTotem);
+    pacientesAtivos.moverTodos();
     tempoUltimoPasso = tempoAtual;
   }
   
@@ -136,6 +142,8 @@ void drawMapa() {
         }
       }
 
+     int assentoIdxDraw = 0; // acompanha o array "assentos" na mesma ordem em que inicializarAssentos() o preencheu (varredura i,j)
+
      for (int i = 0; i < linhas; i++) { //passei dnv por cima para os bixinhos ficarem em cima do cenário
     for (int j = 0; j < colunas; j++) {
       char celula = gridMapa[i][j];
@@ -157,9 +165,15 @@ void drawMapa() {
       else if (celula == 'E') desenharSpriteEstourando(sprPostoEnfermeira, px, py, escalaBoneco);
       else if (celula == 'M') desenharSpriteEstourando(sprPostoMedico, px, py, escalaBoneco);
       else if (celula == 'A') {
+        // escolhe o sprite de acordo com o estado ATUAL desse assento
+        // (livre / reservado / ocupado)
+        String estadoAssento = assentos[assentoIdxDraw].estado;
+        PImage sprAssento = sprAssentoLivre;
+        if (estadoAssento.equals(ASSENTO_RESERVADO)) sprAssento = sprAssentoReservado;
+        else if (estadoAssento.equals(ASSENTO_OCUPADO)) sprAssento = sprAssentoOcupado;
       
-        image(sprAssentoLivre, px, py, tamanhoCelula, tamanhoCelula);
-    
+        image(sprAssento, px, py, tamanhoCelula, tamanhoCelula);
+        assentoIdxDraw++;
       }
     }
   }
@@ -186,13 +200,40 @@ void encontrarGerador() {
   }
   
 }
-Coordenadas encontrarTotem() {
+void inicializarTotem() {
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
       if (gridMapa[i][j] == 'T') {
-        return new Coordenadas(i, j);
+        totem = new Totem(i, j);
+        // wavefront calculado UMA vez aqui: o totem não se move, então essa
+        // matriz de distâncias serve para todo mundo que precisar ir até ele
+        mapaDistanciasTotem = wf.calcular(i, j, gridMapa, linhas, colunas);
+        return;
       }
     }
   }
-  return null;
+}
+
+void inicializarAssentos() {
+  int total = 0;
+  for (int i = 0; i < linhas; i++) {
+    for (int j = 0; j < colunas; j++) {
+      if (gridMapa[i][j] == 'A') total++;
+    }
+  }
+  
+  assentos = new Assento[total];
+  int idx = 0;
+  for (int i = 0; i < linhas; i++) {
+    for (int j = 0; j < colunas; j++) {
+      if (gridMapa[i][j] == 'A') {
+        Assento a = new Assento(i, j);
+        // idem: cada assento é fixo, então seu wavefront é calculado uma
+        // única vez no setup e reaproveitado por todos os pacientes
+        a.distanciasAteAqui = wf.calcular(i, j, gridMapa, linhas, colunas);
+        assentos[idx] = a;
+        idx++;
+      }
+    }
+  }
 }
