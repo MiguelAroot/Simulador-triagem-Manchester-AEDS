@@ -15,14 +15,15 @@ class Assento {
   }
 }
 
-int buscarAssentoMaisProximo(int origemL, int origemC) { 
+int buscarAssentoMaisProximo(int origemL, int origemC, int assentoEvitar) {
   int total = assentos.length;
 
   int[] indicesLivres = new int[total];     
   int[] distanciasLivres = new int[total];  
   int qtdLivres = 0;                       
 
-  for (int i = 0; i < total; i++) { 
+  for (int i = 0; i < total; i++) {
+    if (i == assentoEvitar) continue; // pula a cadeira que acabou de falhar
     if (assentos[i].estado.equals(ASSENTO_LIVRE)) { 
       int dist = assentos[i].distanciasAteAqui[origemL][origemC]; // distância navegando pelas paredes
       if (dist != -1) {                     // -1 obstaculo ignora

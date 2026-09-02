@@ -31,7 +31,9 @@ class Wavefront {
         if (novoL >= 0 && novoL < numLinhas && novoC >= 0 && novoC < numColunas) {
           if (mapa[novoL][novoC] != '#' && distancias[novoL][novoC] == -1) {
             distancias[novoL][novoC] = distancias[atual.linha][atual.coluna] + 1;
+            if (mapa[novoL][novoC] != 'A') {
             fila.enfileirar(new Coordenadas(novoL, novoC));
+            }
           }
         }
       }
