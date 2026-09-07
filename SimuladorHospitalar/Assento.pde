@@ -4,16 +4,16 @@ final String ASSENTO_RESERVADO = "RESERVADO"; // marcado a caminho
 final String ASSENTO_OCUPADO = "OCUPADO";     
 
 class Assento {
-  int linha, coluna;          // Onde a cadeira fica no mapa
-  String estado;              //situação da cadeira
-  int[][] distanciasAteAqui;  // O Wavefront salvo 
+  Coordenadas coordAssento;            // Onde a cadeira fica no mapa
+  String estado;                       // situação da cadeira
+  int[][] distanciasAteAqui;           // O Wavefront salvo 
 
-  Assento(int l, int c) {
-    this.linha = l;
-    this.coluna = c;
+  Assento() {
     this.estado = ASSENTO_LIVRE; // cadeira começa liberada
   }
+  
 }
+
 
 int buscarAssentoMaisProximo(int origemL, int origemC, int assentoEvitar) {
   int total = assentos.length;
@@ -26,10 +26,10 @@ int buscarAssentoMaisProximo(int origemL, int origemC, int assentoEvitar) {
     if (i == assentoEvitar) continue; // pula a cadeira que acabou de falhar
     if (assentos[i].estado.equals(ASSENTO_LIVRE)) { 
       int dist = assentos[i].distanciasAteAqui[origemL][origemC]; // distância navegando pelas paredes
-      if (dist != -1) {                     // -1 obstaculo ignora
-        indicesLivres[qtdLivres] = i;       // Salva o ID do assento
-        distanciasLivres[qtdLivres] = dist; // Salva a distância dele
-        qtdLivres++;
+      if (dist != -1) {                      // -1 obstaculo ignora
+         indicesLivres[qtdLivres] = i;       // Salva o ID do assento
+         distanciasLivres[qtdLivres] = dist; // Salva a distância dele
+         qtdLivres++;
       }
     }
   }
@@ -49,4 +49,5 @@ int buscarAssentoMaisProximo(int origemL, int origemC, int assentoEvitar) {
 
   if (qtdLivres == 0) return -1; 
   return indicesLivres[0];     
+  
 }
