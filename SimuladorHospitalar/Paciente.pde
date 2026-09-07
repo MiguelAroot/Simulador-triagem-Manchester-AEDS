@@ -6,12 +6,16 @@ final String EST_AGUARDANDO_T = "AGUARDANDO_TRIAGEM";
 final String EST_INDO_TRIAGEM = "INDO_TRIAGEM";
 final String EST_AGUARDANDO_M = "AGUARDANDO_MEDICO";
 final String EST_INDO_MEDICO  = "INDO_MEDICO";
+final String EST_ALTA         = "ALTA";
 
 class Paciente {
   int preferencial;
   int id;
   int[] sinaisVitais;
-  int x, y;
+  Coordenadas coordPaciente;
+  
+  Enfermeira enfermeiraDestino;
+  Medico medicoDestino;
   
   boolean jaFoiTriado = false;
   String corManchester = null;
@@ -26,8 +30,7 @@ class Paciente {
 
   Paciente(int id, int linha, int coluna) {
     this.id = id;
-    this.x = linha;
-    this.y = coluna;
+    this.coordPaciente = new Coordenadas(linha, coluna);
     this.estado = EST_INDO_TOTEM;
 
     float chance = random(1);
@@ -57,8 +60,8 @@ class Paciente {
       fill(#FFFAFD); // Normal (Branco/Claro)
     }
 
-    float cx = this.y * tamanhoCelula + tamanhoCelula / 2.0;
-    float cy = this.x * tamanhoCelula + tamanhoCelula / 2.0;
+    float cx = this.coordPaciente.coluna * tamanhoCelula + tamanhoCelula / 2.0;
+    float cy = this.coordPaciente.linha * tamanhoCelula + tamanhoCelula / 2.0;
     ellipse(cx, cy, tamanhoCelula * 0.8, tamanhoCelula * 0.8);
 
     // desenha a senha em cima do paciente na tela
@@ -68,44 +71,46 @@ class Paciente {
       textSize(9);
       text(this.senha, cx, cy - tamanhoCelula * 0.65);
     }
+    
   }
 
 
   void atualizar() {
-    if (estado.equals(EST_INDO_TOTEM)) {
-      mover(mapaDistanciasTotem);
+    if (estado.equals(EST_INDO_TOTEM)) { // ENTROU
+      mover(totem.mapaDistanciasTotem);
 
-      if (this.x == totem.linha && this.y == totem.coluna) {
+      if (this.coordPaciente.linha == totem.coordTotem.linha && this.coordPaciente.coluna == totem.coordTotem.coluna) {
         if (senha == null) {
           senha = totem.retirarSenha(preferencial);
         }
         tentarReservarAssento();
       }
 
-    } else if (estado.equals(EST_AGUARDANDO)) {
+    } else if (estado.equals(EST_AGUARDANDO)) { // RESERVANDO E ABRINDO ESPAÇO NO TOTEM
       afastarDoTotem();
       tentarReservarAssento();
 
-    } else if (estado.equals(EST_INDO_ASSENTO)) {
+    } else if (estado.equals(EST_INDO_ASSENTO)) { // INDO AO ASSENTO
       Assento destino = assentos[assentoIndex];
 
       // distância ATÉ A CADEIRA antes de tentar mover  isso é o que importa,
       // não a posição em si (posição pode mudar sem progresso real, ex: oscilando)
-      int distAntes = destino.distanciasAteAqui[this.x][this.y];
-      int xAntes = this.x;
-      int yAntes = this.y;
+      int distAntes = destino.distanciasAteAqui[this.coordPaciente.linha][this.coordPaciente.coluna];
+      int xAntes = this.coordPaciente.linha;
+      int yAntes = this.coordPaciente.coluna;
       
       mover(destino.distanciasAteAqui);
 
-      int distDepois = destino.distanciasAteAqui[this.x][this.y];
+      int distDepois = destino.distanciasAteAqui[this.coordPaciente.linha][this.coordPaciente.coluna];
 
-      if (this.x == destino.linha && this.y == destino.coluna) {
+      if (this.coordPaciente.linha == destino.coordAssento.linha && this.coordPaciente.coluna == destino.coordAssento.coluna) {
         // chegou: ocupa de verdade e reseta o contador
         destino.estado = ASSENTO_OCUPADO;
         estado = EST_SENTADO;
+        ocupacao[this.coordPaciente.linha][this.coordPaciente.coluna] = false;
         framesParado = 0;
 
-      } else if (distDepois < distAntes || this.x != xAntes || this.y != yAntes) {
+      } else if (distDepois < distAntes || this.coordPaciente.linha != xAntes || this.coordPaciente.coluna != yAntes) {
         // progrediu de verdade rumo à cadeira -reseta o contador
         framesParado = 0;
 
@@ -123,32 +128,41 @@ class Paciente {
         }
       }
 
-    } else if (estado.equals(EST_SENTADO)) {
+    } else if (estado.equals(EST_SENTADO)) { // SENTOU
         if (!jaFoiTriado) {
+          //
           if(this.preferencial == 1) {
             triagem.filaPreferencial.adicionar(this);
           } else {
             triagem.filaNormal.adicionar(this);
           }
+          //
           this.estado = EST_AGUARDANDO_T;
         } else {
+          filaManchester.enfileirar(this);
           this.estado = EST_AGUARDANDO_M;
         }
-    } else if (estado.equals(EST_AGUARDANDO_T)) {
+    } else if (estado.equals(EST_AGUARDANDO_T)) { // CONTINUA ESPERANDO, ENFERM DESSA VEZ
         // waiting
-    } else if (estado.equals(EST_INDO_TRIAGEM)) {
-        mover(distanciaEnfermeira);
-        if (this.x == coordEnfermeira.linha && this.y == coordEnfermeira.coluna) {
-          estado = "EM_ATENDIMENTO";
+    } else if (estado.equals(EST_INDO_TRIAGEM)) { // INDO PRA ENFERMEIRA
+        mover(this.enfermeiraDestino.distanciaEnfermeira);
+        if (this.coordPaciente.linha == this.enfermeiraDestino.coordEnfermeira.linha && this.coordPaciente.coluna == this.enfermeiraDestino.coordEnfermeira.coluna) {
+          estado = "EM_ATENDIMENTO"; //NA ENFERMEIRA
         }
-    } else if (estado.equals(EST_AGUARDANDO_M)) {
-        //waiting 
+    } else if (estado.equals(EST_AGUARDANDO_M)) { // VOLTOU E TÁ ESPERANDO O MÉDICO
+        //waiting dnv médico dessa vez
+    } else if (estado.equals(EST_INDO_MEDICO)) {
+        mover(this.medicoDestino.distanciaMedico);
+        if (this.coordPaciente.linha == this.medicoDestino.coordMedico.linha && this.coordPaciente.coluna == this.medicoDestino.coordMedico.coluna) {
+          estado = "EM_CONSULTA"; //NO MEDICO
+        }
     }
+    
   }
 
 
   void tentarReservarAssento() {
-    int idx = buscarAssentoMaisProximo(this.x, this.y, ultimoAssentoFalho);
+    int idx = buscarAssentoMaisProximo(this.coordPaciente.linha, this.coordPaciente.coluna, ultimoAssentoFalho);
 
     if (idx != -1) {
       assentoIndex = idx;
@@ -157,6 +171,7 @@ class Paciente {
     } else {
       estado = EST_AGUARDANDO;
     }
+    
   }
 
 
@@ -165,23 +180,24 @@ class Paciente {
     int[] dColuna = {0, 0, -1, 1};
 
     for (int i = 0; i < 4; i++) {
-      int nL = this.x + dLinha[i];
-      int nC = this.y + dColuna[i];
+      int nL = this.coordPaciente.linha + dLinha[i];
+      int nC = this.coordPaciente.coluna + dColuna[i];
       if (nL >= 0 && nL < linhas && nC >= 0 && nC < colunas) {
         if (gridMapa[nL][nC] != '#' && gridMapa[nL][nC] != 'A' && !ocupacao[nL][nC]) {
-          ocupacao[this.x][this.y] = false;
+          ocupacao[this.coordPaciente.linha][this.coordPaciente.coluna] = false;
           ocupacao[nL][nC] = true;
-          this.x = nL;
-          this.y = nC;
+          this.coordPaciente.linha = nL;
+          this.coordPaciente.coluna = nC;
           return;
         }
       }
     }
+    
   }
 
 
   void mover(int[][] distancias) {
-    if (distancias == null || distancias[this.x][this.y] == 0) {
+    if (distancias == null || distancias[this.coordPaciente.linha][this.coordPaciente.coluna] == 0) {
       return;
     }
 
@@ -194,8 +210,8 @@ class Paciente {
     int qtd = 0;
 
     for (int i = 0; i < 4; i++) {
-      int nL = this.x + dLinha[i];
-      int nC = this.y + dColuna[i];
+      int nL = this.coordPaciente.linha + dLinha[i];
+      int nC = this.coordPaciente.coluna + dColuna[i];
       if (nL >= 0 && nL < linhas && nC >= 0 && nC < colunas) {
         int d = distancias[nL][nC];
         if (d != -1) {
@@ -222,7 +238,7 @@ class Paciente {
       candC[j + 1] = cv;
     }
 
-    int minhaDistAtual = distancias[this.x][this.y];
+    int minhaDistAtual = distancias[this.coordPaciente.linha][this.coordPaciente.coluna];
 
     // 1ª tentativa: só anda pra quem está mais perto do destino
     for (int i = 0; i < qtd; i++) {
@@ -241,16 +257,21 @@ class Paciente {
       }
     }
     // se estiver tudo mesmo bloqueado, fica parado nesse frame
+    
   }
 
   void moverPara(int nL, int nC) {
-    ocupacao[this.x][this.y] = false;
+    ocupacao[this.coordPaciente.linha][this.coordPaciente.coluna] = false;
     ocupacao[nL][nC] = true;
-    this.x = nL;
-    this.y = nC;
+    this.coordPaciente.linha = nL;
+    this.coordPaciente.coluna = nC;
+    
   }
 
+
 } // <-- fecha a classe Paciente (estava faltando)
+
+
 
 class NoPaciente {
   Paciente dado;
@@ -260,11 +281,15 @@ class NoPaciente {
     this.dado = p;
     this.proximo = null;
   }
+  
+  
 }
+
 
 class ListaPacientes {
   NoPaciente inicio;
-
+  
+  
   void adicionar(Paciente p) {
     NoPaciente novo = new NoPaciente(p);
     
@@ -290,7 +315,7 @@ class ListaPacientes {
     }
     NoPaciente atual = inicio;
     while (atual != null) {
-      ocupacao[atual.dado.x][atual.dado.y] = true;
+      ocupacao[atual.dado.coordPaciente.linha][atual.dado.coordPaciente.coluna] = true;
       atual = atual.proximo;
     }
 
@@ -300,7 +325,9 @@ class ListaPacientes {
       atual.dado.atualizar();
       atual = atual.proximo;
     }
+    
   }
+
 
   void desenharTodos() {
     NoPaciente atual = inicio;
@@ -308,7 +335,9 @@ class ListaPacientes {
       atual.dado.drawPaciente();
       atual = atual.proximo;
     }
+    
   }
+  
   
   Paciente removerInicio() {
     if(inicio == null) {
@@ -318,10 +347,14 @@ class ListaPacientes {
     Paciente p = inicio.dado;
     inicio = inicio.proximo;
     return p;
+    
   }
+  
   
   boolean vazia() {
     return this.inicio == null;
+    
   }
+  
   
 }
