@@ -2,15 +2,15 @@
 char[][] gridMapa;
 int linhas, colunas;
 int tamanhoCelula = 29;
+float escalaBoneco = 2.2; //em uma celula só tava osso de mais para enxergar o boneco
 
 //recursos wavefront
 Wavefront wf = new Wavefront();
-int[][] mapaDistanciasTotem;
-int[][] distanciaEnfermeira;
-int[][] distanciaMedico;
 
-//totem, assentos, enfermeira e grid de ocupação física (true = célula com paciente)
+//totem, assentos, enfermeira, medico e grid de ocupação física (true = célula com paciente)
 Totem totem;
+Enfermeira[] enfermeiras;
+Medico[] medicos;
 Assento[] assentos;
 boolean[][] ocupacao;
 
@@ -19,9 +19,11 @@ ListaPacientes pacientesAtivos = new ListaPacientes();
 int contadorIds = 1;
 
 //triagem e enfermeira
-Enfermeira enfermeira = new Enfermeira();
 Triagem triagem = new Triagem();
+
+// manchester e médico
 Manchester manchester = new Manchester();
+FilaManchester filaManchester = new FilaManchester();
 
 //recursos de tempo
 float tempoUltimoPasso = 0;
@@ -31,8 +33,7 @@ float tempoUltimoFrame = 0;
 float tempoAcumulado = 0;
 float tempoProximoSpawn = 0;
 
-Coordenadas coordMedico;
-Coordenadas coordEnfermeira;
+// coords
 int geradorL = -1, geradorC = -1;
 
 //sprites do cenário 
@@ -54,8 +55,8 @@ void setup() {
   inicializarAssentos();
   ocupacao = new boolean[linhas][colunas];
   
-  encontrarEnfermeira();
-  encontrarMedico();
+  encontrarEnfermeiras();
+  encontrarMedicos();
   
   tempoUltimoFrame = millis() / 1000.0;
   
@@ -100,14 +101,22 @@ void draw() {
       Paciente p = new Paciente(contadorIds++, geradorL, geradorC);
       pacientesAtivos.adicionar(p);
     }
+    
     tempoAcumulado = 0;
     calcularProximoSpawn();
   }
   
-  //passo a cada 0.2s
+  //passo e att a cada 0.2s
   if (tempoAtual - tempoUltimoPasso >= intervaloPasso) {
     pacientesAtivos.moverTodos();
-    enfermeira.atualizar();
+    
+    for (int i = 0; i < enfermeiras.length; i++) {
+      enfermeiras[i].atualizar();
+    }
+    for (int i = 0; i < medicos.length; i++) {
+      medicos[i].atualizar();
+    }
+    
     tempoUltimoPasso = tempoAtual;
   }
   
@@ -117,6 +126,7 @@ void draw() {
 
 
 void calcularProximoSpawn() {
+  
   float mediaSpawn = 5.0; 
   float u = random(0.0001, 0.9999); 
   tempoProximoSpawn = -mediaSpawn * log(1 - u);
@@ -125,6 +135,7 @@ void calcularProximoSpawn() {
 
 
 void loadMapa(String arquivo) {
+  
   String[] linhasArquivo = loadStrings(arquivo);
   
   String[] dimensoes = split(linhasArquivo[0], ' ');
@@ -142,9 +153,9 @@ void loadMapa(String arquivo) {
   
 }
 
-float escalaBoneco = 2.2; //em uma celula só tava osso de mais para enxergar o boneco
 
 void drawMapa() {
+  
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
       char celula = gridMapa[i][j];
@@ -197,12 +208,14 @@ void drawMapa() {
   
 }
 
+
 void desenharSpriteEstourando(PImage spr, int px, int py, float escala) {
   float tamanho = tamanhoCelula * escala;
   float destX = px + tamanhoCelula / 2.0 - tamanho / 2.0;
   float destY = py + tamanhoCelula - tamanho;
   image(spr, destX, destY, tamanho, tamanho);
 }
+
 
 //favor colocar os encontrar aqui
 void encontrarGerador() {
@@ -218,24 +231,66 @@ void encontrarGerador() {
   
 }
 
-void encontrarMedico() {
+
+void encontrarMedicos() {
+  int total = 0;
+  for (int i = 0; i < linhas; i++) {
+    for (int j = 0; j < colunas; j++) {
+      if (gridMapa[i][j] == 'M') total++;
+    }
+  }
+  
+  medicos = new Medico[total];
+  int idx = 0;
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
       if (gridMapa[i][j] == 'M') {
-        coordMedico = new Coordenadas(i, j);
-        distanciaMedico = wf.calcular(i, j, gridMapa, linhas, colunas);
-        return;
+        Medico m = new Medico();
+        m.coordMedico = new Coordenadas(i, j);
+        m.distanciaMedico = wf.calcular(i, j, gridMapa, linhas, colunas);
+        medicos[idx] = m;
+        idx++;
       }
     }
   }
+  
 }
 
-void encontrarEnfermeira() {
+
+void encontrarEnfermeiras() {
+  int total = 0;
+  for (int i = 0; i < linhas; i++) {
+    for (int j = 0; j < colunas; j++) {
+      if (gridMapa[i][j] == 'E') total++;
+    }
+  }
+  
+  enfermeiras = new Enfermeira[total];
+  int idx = 0;
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
       if (gridMapa[i][j] == 'E') {
-        coordEnfermeira = new Coordenadas(i, j);
-        distanciaEnfermeira = wf.calcular(i, j, gridMapa, linhas, colunas);
+        Enfermeira e = new Enfermeira();
+        e.coordEnfermeira = new Coordenadas(i, j);
+        e.distanciaEnfermeira = wf.calcular(i, j, gridMapa, linhas, colunas);
+        enfermeiras[idx] = e;
+        idx++;
+      }
+    }
+  }
+  
+}
+
+
+void inicializarTotem() {
+  for (int i = 0; i < linhas; i++) {
+    for (int j = 0; j < colunas; j++) {
+      if (gridMapa[i][j] == 'T') {
+        totem = new Totem();
+        totem.coordTotem = new Coordenadas(i, j);
+        // wavefront calculado UMA vez aqui: o totem não se move, então essa
+        // matriz de distâncias serve para todo mundo que precisar ir até ele
+        totem.mapaDistanciasTotem = wf.calcular(i, j, gridMapa, linhas, colunas);
         return;
       }
     }
@@ -243,19 +298,6 @@ void encontrarEnfermeira() {
   
 }
 
-void inicializarTotem() {
-  for (int i = 0; i < linhas; i++) {
-    for (int j = 0; j < colunas; j++) {
-      if (gridMapa[i][j] == 'T') {
-        totem = new Totem(i, j);
-        // wavefront calculado UMA vez aqui: o totem não se move, então essa
-        // matriz de distâncias serve para todo mundo que precisar ir até ele
-        mapaDistanciasTotem = wf.calcular(i, j, gridMapa, linhas, colunas);
-        return;
-      }
-    }
-  }
-}
 
 void inicializarAssentos() {
   int total = 0;
@@ -270,7 +312,8 @@ void inicializarAssentos() {
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
       if (gridMapa[i][j] == 'A') {
-        Assento a = new Assento(i, j);
+        Assento a = new Assento();
+        a.coordAssento = new Coordenadas(i, j);
         // idem: cada assento é fixo, então seu wavefront é calculado uma
         // única vez no setup e reaproveitado por todos os pacientes
         a.distanciasAteAqui = wf.calcular(i, j, gridMapa, linhas, colunas);
@@ -279,4 +322,5 @@ void inicializarAssentos() {
       }
     }
   }
+  
 }
