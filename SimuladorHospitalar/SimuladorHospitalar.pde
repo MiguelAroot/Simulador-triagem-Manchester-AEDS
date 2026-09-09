@@ -9,6 +9,7 @@ Wavefront wf = new Wavefront();
 
 //totem, assentos, enfermeira, medico e grid de ocupação física (true = célula com paciente)
 Totem totem;
+Removedor removedor;
 Enfermeira[] enfermeiras;
 Medico[] medicos;
 Assento[] assentos;
@@ -37,18 +38,22 @@ float tempoProximoSpawn = 0;
 int geradorL = -1, geradorC = -1;
 
 //sprites do cenário 
+Menu sistemaMenu;
 PImage sprParede, sprChao, sprTotem, sprGerador, sprRemovedor;
 PImage sprAssentoLivre, sprAssentoReservado, sprAssentoOcupado;
 PImage sprPostoEnfermeira, sprPostoMedico;
 
 void setup() {
   size(697, 700);
-
+  
+  noSmooth();
+  sistemaMenu = new Menu();
   carregarSprites();
   
   loadMapa("mapa1.txt");
   
   encontrarGerador();
+  encontrarRemovedor();
   calcularProximoSpawn();
   
   inicializarTotem();
@@ -66,11 +71,9 @@ void setup() {
 void carregarSprites() {
   sprParede = loadImage("sprites/parede.png");
   sprChao = loadImage("sprites/chao.png");
+  
   sprTotem = loadImage("sprites/totem.png");
   sprRemovedor = loadImage("sprites/removedor.png");
-
-  // ainda não tem sprite próprio de gerador, dai fica null e o drawMapa()
-  // desenha um retângulo verde no lugar, pra não travar o sketch
   sprGerador = loadImage("sprites/gerador.png");
 
   // só existe uma imagem de assento por enquanto para os 3 estados
@@ -85,6 +88,20 @@ void carregarSprites() {
 
 void draw() {
   background(255);
+  
+  // O estado gerencia o que deve ser desenhado em cada tela
+  if (sistemaMenu.estado == 0) {
+    sistemaMenu.exibirInicial();
+  } else if (sistemaMenu.estado == 1) {
+    executarJogoLivre();
+  } else if (sistemaMenu.estado == 2) {
+    drawMapa();
+    pacientesAtivos.desenharTodos();
+    sistemaMenu.exibirPausa();
+    }
+  }
+
+void executarJogoLivre() {
   if (gridMapa != null) {
     drawMapa();
   }
@@ -94,19 +111,15 @@ void draw() {
   tempoUltimoFrame = tempoAtual;
   tempoAcumulado += deltaTime;
 
-    
   if (tempoAcumulado >= tempoProximoSpawn) {
-    // só nasce paciente novo se a célula do gerador estiver livre (regra do enunciado)
     if (geradorL != -1 && !ocupacao[geradorL][geradorC]) {
       Paciente p = new Paciente(contadorIds++, geradorL, geradorC);
       pacientesAtivos.adicionar(p);
     }
-    
     tempoAcumulado = 0;
     calcularProximoSpawn();
   }
   
-  //passo e att a cada 0.2s
   if (tempoAtual - tempoUltimoPasso >= intervaloPasso) {
     pacientesAtivos.moverTodos();
     
@@ -121,6 +134,39 @@ void draw() {
   }
   
   pacientesAtivos.desenharTodos();
+}
+
+void mousePressed() {
+  sistemaMenu.verificarCliques();
+}
+
+void keyPressed() {
+  if (key == 'p' || key == 'P') {
+    if (sistemaMenu.estado == 1) {
+      sistemaMenu.estado = 2;
+    } else if (sistemaMenu.estado == 2) {
+      sistemaMenu.estado = 1;
+    }
+  }
+}
+
+void resetarSimulacao(String arquivoMapa) {
+  pacientesAtivos = new ListaPacientes();
+  contadorIds = 1;
+  tempoAcumulado = 0;
+  
+  loadMapa(arquivoMapa);
+  encontrarGerador();
+  encontrarRemovedor();
+  calcularProximoSpawn();
+  
+  ocupacao = new boolean[linhas][colunas];
+  inicializarTotem();
+  inicializarAssentos();
+  encontrarEnfermeiras();
+  encontrarMedicos();
+  
+  tempoUltimoFrame = millis() / 1000.0;
        
 }
 
@@ -217,13 +263,28 @@ void desenharSpriteEstourando(PImage spr, int px, int py, float escala) {
 }
 
 
-//favor colocar os encontrar aqui
+//favor colocar os encontrar e instanciar aqui
 void encontrarGerador() {
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
       if (gridMapa[i][j] == 'G') {
         geradorL = i;
         geradorC = j;
+        return;
+      }
+    }
+  }
+  
+}
+
+
+void encontrarRemovedor() {
+  for (int i = 0; i < linhas; i++) {
+    for (int j = 0; j < colunas; j++) {
+      if (gridMapa[i][j] == 'R') {
+        removedor = new Removedor();
+        removedor.coordRemovedor = new Coordenadas(i, j);
+        removedor.mapaDistanciasRemovedor = wf.calcular(i, j, gridMapa, linhas, colunas);
         return;
       }
     }
